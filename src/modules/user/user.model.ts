@@ -1,7 +1,14 @@
 import db from '../../config/db.js';
 
 export const findAllUsers = async () => {
-    const [rows] = await db.query('SELECT * FROM users ORDER BY created_at DESC');
+    const [rows]: any = await db.query(`
+        SELECT id, name, email, role, is_active, created_at 
+        FROM users 
+        UNION ALL 
+        SELECT (id + 1000000) as id, 'Master Admin' as name, email, 'Admin' as role, 1 as is_active, created_at 
+        FROM admins
+        ORDER BY created_at DESC
+    `);
     return rows;
 };
 
