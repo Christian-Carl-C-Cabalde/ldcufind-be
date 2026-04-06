@@ -1,7 +1,7 @@
 import db from '../../config/db.js';
 
 export const findAllItems = async () => {
-    const [rows] = await db.query('SELECT * FROM items ORDER BY created_at DESC');
+    const [rows]: any = await db.query('SELECT * FROM items ORDER BY created_at DESC');
     return rows;
 };
 

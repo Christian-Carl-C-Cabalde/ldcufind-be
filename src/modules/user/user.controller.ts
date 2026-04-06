@@ -29,6 +29,10 @@ export const patchUserStatus = async (c: Context) => {
     try {
         const id = Number(c.req.param('id'));
 
+        if (id >= 1000000) {
+            return c.json({ message: 'System error: Cannot modify Master Admin privileges from this panel.' }, 403);
+        }
+
         const existing = await findUserById(id);
         if (!existing) {
             return c.json({ message: 'User not found' }, 404);
