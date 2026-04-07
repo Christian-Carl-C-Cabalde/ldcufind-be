@@ -72,3 +72,11 @@ export const updateClaim = async (id: number, data: {
     );
     return result;
 };
+
+export const removeClaim = async (id: number) => {
+    const [result] = await db.query(
+        'DELETE FROM claims WHERE id = ?',
+        [id]
+    );
+    return result;
+};

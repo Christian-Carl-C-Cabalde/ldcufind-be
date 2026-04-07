@@ -1,5 +1,7 @@
 import type { Context } from 'hono';
 import { findAllItems, findItemById, createItem, updateItem, deleteItem } from './item.model.js';
+import fs from 'fs';
+import path from 'path';
 
 // Helper to map DB columns to what Angular frontend expects
 const formatItem = (item: any) => {
@@ -86,6 +88,15 @@ export const removeItem = async (c: Context) => {
         }
 
         await deleteItem(id);
+
+        if (existing.image_url && existing.image_url.includes('/uploads/')) {
+            const filename = existing.image_url.split('/uploads/').pop();
+            const filePath = path.join(process.cwd(), 'uploads', filename);
+            if (fs.existsSync(filePath)) {
+                fs.unlinkSync(filePath);
+            }
+        }
+
         return c.json({ message: 'Item deleted successfully' }, 200);
     } catch (error) {
         return c.json({ message: 'Failed to delete item' }, 500);
