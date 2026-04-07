@@ -1,17 +1,13 @@
--- =============================================
--- LDCUFind Database Schema
--- =============================================
-
--- Admins table (already exists, included for reference)
--- CREATE TABLE admins (
---     id INT AUTO_INCREMENT PRIMARY KEY,
---     email VARCHAR(255) UNIQUE NOT NULL,
---     password VARCHAR(255) NOT NULL,
---     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
--- );
+-- Admins table
+CREATE TABLE admins (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
 
 -- Items table (for post-item & item-management)
-CREATE TABLE IF NOT EXISTS items (
+CREATE TABLE items (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     description TEXT NOT NULL,
@@ -24,20 +20,24 @@ CREATE TABLE IF NOT EXISTS items (
 );
 
 -- Claims table (for claim-verification & settled-items)
-CREATE TABLE IF NOT EXISTS claims (
+CREATE TABLE claims (
     id INT AUTO_INCREMENT PRIMARY KEY,
     item_id INT NOT NULL,
     claimant_name VARCHAR(255) NOT NULL,
     claimant_email VARCHAR(255) NOT NULL,
     proof_text TEXT,
-    status ENUM('pending', 'verified', 'rejected') DEFAULT 'pending',
+    status ENUM(
+        'pending',
+        'verified',
+        'rejected'
+    ) DEFAULT 'pending',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (item_id) REFERENCES items(id) ON DELETE CASCADE
+    FOREIGN KEY (item_id) REFERENCES items (id) ON DELETE CASCADE
 );
 
 -- Users table (for user-management)
-CREATE TABLE IF NOT EXISTS users (
+CREATE TABLE users (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     email VARCHAR(255) UNIQUE NOT NULL,

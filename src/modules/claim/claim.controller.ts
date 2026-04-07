@@ -1,5 +1,5 @@
 import type { Context } from 'hono';
-import { findAllClaims, findClaimById, createClaim, updateClaimStatus, updateClaim } from './claim.model.js';
+import { findAllClaims, findClaimById, createClaim, updateClaimStatus, updateClaim, removeClaim } from './claim.model.js';
 
 export const getClaims = async (c: Context) => {
     try {
@@ -83,5 +83,21 @@ export const putClaim = async (c: Context) => {
         return c.json({ message: 'Claim updated successfully', claim: updated }, 200);
     } catch (error) {
         return c.json({ message: 'Failed to update claim' }, 500);
+    }
+};
+
+export const deleteClaim = async (c: Context) => {
+    try {
+        const id = Number(c.req.param('id'));
+
+        const existing = await findClaimById(id);
+        if (!existing) {
+            return c.json({ message: 'Claim not found' }, 404);
+        }
+
+        await removeClaim(id);
+        return c.json({ message: 'Claim deleted successfully' }, 200);
+    } catch (error) {
+        return c.json({ message: 'Failed to delete claim' }, 500);
     }
 };
