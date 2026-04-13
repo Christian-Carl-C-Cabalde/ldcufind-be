@@ -11,6 +11,7 @@ import itemRoutes from './modules/item/item.routes.js'
 import claimRoutes from './modules/claim/claim.routes.js'
 import dashboardRoutes from './modules/dashboard/dashboard.routes.js'
 import userRoutes from './modules/user/user.routes.js'
+import authRoutes from './modules/auth/auth.routes.js'
 import uploadRoutes from './modules/upload/upload.routes.js'
 
 import { serveStatic } from '@hono/node-server/serve-static'
@@ -44,6 +45,7 @@ app.route('/api/items', itemRoutes)
 app.route('/api/claims', claimRoutes)
 app.route('/api/dashboard', dashboardRoutes)
 app.route('/api/users', userRoutes)
+app.route('/api/auth', authRoutes)
 app.route('/api/upload', uploadRoutes)
 
 // Use PORT from .env, fallback to 3000
