@@ -1,5 +1,4 @@
 import type { Context } from 'hono';
-import bcrypt from 'bcrypt';
 import { findAdminByEmail } from './admin.model.js';
 
 export const loginAdmin = async (c: Context) => {
@@ -13,8 +12,8 @@ export const loginAdmin = async (c: Context) => {
             return c.json({ message: 'Admin not found' }, 404);
         }
 
-        // 2. Compare password
-        const isMatch = await bcrypt.compare(password, admin.password);
+        // 2. Compare password (Direct comparison)
+        const isMatch = password === admin.password;
 
         if (!isMatch) {
             return c.json({ message: 'Invalid credentials' }, 401);
