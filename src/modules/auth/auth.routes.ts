@@ -12,4 +12,8 @@ authRoutes.post('/verify-otp', authController.verifyOtp);
 // POST /api/auth/login - returns JWT
 authRoutes.post('/login', authController.login);
 
+// POST /api/auth/forgot-password - sends reset OTP
+authRoutes.post('/forgot-password', authController.forgotPassword);
+
 export default authRoutes;
+

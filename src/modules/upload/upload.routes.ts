@@ -36,4 +36,32 @@ uploadRoutes.post('/', async (c) => {
     }
 });
 
+uploadRoutes.post('/proof', async (c) => {
+    try {
+        const body = await c.req.parseBody();
+        const file = body['image'];
+
+        if (file instanceof File) {
+            const buffer = await file.arrayBuffer();
+            const cleanedName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, '');
+            const uniqueName = `${Date.now()}-${cleanedName}`;
+            
+            const proofDir = path.join(process.cwd(), 'proofUploads');
+            if (!fs.existsSync(proofDir)) {
+                fs.mkdirSync(proofDir, { recursive: true });
+            }
+            
+            const uploadPath = path.join(proofDir, uniqueName);
+            fs.writeFileSync(uploadPath, Buffer.from(buffer));
+            
+            return c.json({ url: `http://localhost:3000/proofUploads/${uniqueName}` });
+        } else {
+            return c.json({ message: 'No file found in request' }, 400);
+        }
+    } catch (error) {
+        console.error('Proof upload error:', error);
+        return c.json({ message: 'Upload failed' }, 500);
+    }
+});
+
 export default uploadRoutes;

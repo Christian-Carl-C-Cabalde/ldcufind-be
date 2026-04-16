@@ -24,3 +24,12 @@ export const toggleUserStatus = async (id: number) => {
     );
     return result;
 };
+
+export const updateUserProfile = async (id: number, name: string) => {
+    const [result] = await db.query(
+        'UPDATE users SET name = ? WHERE id = ?',
+        [name, id]
+    );
+    return result;
+};
+
