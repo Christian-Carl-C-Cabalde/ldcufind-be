@@ -73,8 +73,9 @@ export const putItem = async (c: Context) => {
         const updated = await findItemById(id);
 
         return c.json({ message: 'Item updated successfully', item: formatItem(updated) }, 200);
-    } catch (error) {
-        return c.json({ message: 'Failed to update item' }, 500);
+    } catch (error: any) {
+        console.error('Update item error detail:', error);
+        return c.json({ message: 'Failed to update item', error: error.message }, 500);
     }
 };
 
