@@ -35,9 +35,13 @@ app.get('/', (c) => {
 if (!fs.existsSync('uploads')) {
   fs.mkdirSync('uploads');
 }
+if (!fs.existsSync('proofUploads')) {
+  fs.mkdirSync('proofUploads');
+}
 
 // Serve static files from the uploads directory
 app.use('/uploads/*', serveStatic({ root: './' }))
+app.use('/proofUploads/*', serveStatic({ root: './' }))
 
 // Mount all routes
 app.route('/api/admin', adminRoutes)

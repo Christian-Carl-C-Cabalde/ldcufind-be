@@ -14,6 +14,8 @@ const transporter = nodemailer.createTransport({
   }
 });
 
+
+
 export const generateOTP = () => {
   return Math.floor(100000 + Math.random() * 900000).toString();
 };
@@ -119,3 +121,4 @@ export const verifyCredentials = async (email: string, password: string, role: s
   
   return null;
 };
+

@@ -31,6 +31,7 @@ CREATE TABLE IF NOT EXISTS claims (
     claimant_name VARCHAR(255) NOT NULL,
     claimant_email VARCHAR(255) NOT NULL,
     proof_text TEXT,
+    evidence_image_url VARCHAR(500),
     status ENUM(
         'pending',
         'verified',
@@ -71,6 +72,17 @@ CREATE TABLE IF NOT EXISTS otps (
     code VARCHAR(10) NOT NULL,
     expires_at TIMESTAMP NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX (email)
+);
+
+-- Password Resets table
+CREATE TABLE IF NOT EXISTS password_resets (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    email VARCHAR(255) NOT NULL,
+    token VARCHAR(255) NOT NULL,
+    expires_at TIMESTAMP NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX (token),
     INDEX (email)
 );
 

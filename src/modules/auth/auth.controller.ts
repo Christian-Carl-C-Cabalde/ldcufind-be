@@ -52,6 +52,7 @@ export const verifyOtp = async (c: Context) => {
 
     return c.json({ message: 'User registered successfully. Please login.' });
   } catch (error: any) {
+
     console.error('OTP verification error:', error);
     return c.json({ message: 'Failed to verify OTP', error: error.message }, 500);
   }
@@ -105,12 +106,11 @@ export const forgotPassword = async (c: Context) => {
       return c.json({ message: 'Email is required' }, 400);
     }
 
-    // EXPLICITLY check ONLY the users table to exclude admins from reset flow
+    // Check if user exists in either users or admins table
     const [user]: any = await db.query('SELECT * FROM users WHERE email = ?', [email]);
+    const [admin]: any = await db.query('SELECT * FROM admins WHERE email = ?', [email]);
 
-    if (user.length === 0) {
-      // Return success message even if not found to prevent email discovery, 
-      // and explicitly do nothing for admin accounts found in 'admins' table.
+    if (user.length === 0 && admin.length === 0) {
       return c.json({ message: 'If this email is registered, you will receive a reset link shortly.' });
     }
 
@@ -143,8 +143,9 @@ export const resetPassword = async (c: Context) => {
 
     const hashedPassword = await bcrypt.hash(newPassword, 10);
 
-    // Update ONLY in the users table to enforce admin exclusion
+    // Update in both potential tables (if email exists in both, it updates both)
     await db.query('UPDATE users SET password = ? WHERE email = ?', [hashedPassword, email]);
+    await db.query('UPDATE admins SET password = ? WHERE email = ?', [hashedPassword, email]);
 
     return c.json({ message: 'Password has been reset successfully' });
   } catch (error: any) {
@@ -152,3 +153,4 @@ export const resetPassword = async (c: Context) => {
     return c.json({ message: 'Failed to reset password', error: error.message }, 500);
   }
 };
+

@@ -1,5 +1,5 @@
 import type { Context } from 'hono';
-import { findAllUsers, findUserById, toggleUserStatus } from './user.model.js';
+import { findAllUsers, findUserById, toggleUserStatus, updateUserProfile } from './user.model.js';
 
 export const getUsers = async (c: Context) => {
     try {
@@ -49,3 +49,30 @@ export const patchUserStatus = async (c: Context) => {
         return c.json({ message: 'Failed to update user status' }, 500);
     }
 };
+
+export const patchUser = async (c: Context) => {
+    try {
+        const id = Number(c.req.param('id'));
+        const { name } = await c.req.json();
+
+        if (!name) {
+            return c.json({ message: 'Name is required' }, 400);
+        }
+
+        const existing = await findUserById(id);
+        if (!existing) {
+            return c.json({ message: 'User not found' }, 404);
+        }
+
+        await updateUserProfile(id, name);
+        const updated = await findUserById(id);
+
+        return c.json({
+            message: 'Profile updated successfully',
+            user: updated
+        }, 200);
+    } catch (error) {
+        return c.json({ message: 'Failed to update profile' }, 500);
+    }
+};
+
