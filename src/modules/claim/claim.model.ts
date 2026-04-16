@@ -35,10 +35,11 @@ export const createClaim = async (data: {
     claimant_name: string;
     claimant_email: string;
     proof_text?: string;
+    evidence_image_url?: string;
 }) => {
     const [result] = await db.query(
-        'INSERT INTO claims (item_id, claimant_name, claimant_email, proof_text) VALUES (?, ?, ?, ?)',
-        [data.item_id, data.claimant_name, data.claimant_email, data.proof_text || null]
+        'INSERT INTO claims (item_id, claimant_name, claimant_email, proof_text, evidence_image_url) VALUES (?, ?, ?, ?, ?)',
+        [data.item_id, data.claimant_name, data.claimant_email, data.proof_text || null, data.evidence_image_url || null]
     );
     return result;
 };

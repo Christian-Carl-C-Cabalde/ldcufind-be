@@ -31,6 +31,7 @@ CREATE TABLE IF NOT EXISTS claims (
     claimant_name VARCHAR(255) NOT NULL,
     claimant_email VARCHAR(255) NOT NULL,
     proof_text TEXT,
+    evidence_image_url VARCHAR(500),
     status ENUM(
         'pending',
         'verified',

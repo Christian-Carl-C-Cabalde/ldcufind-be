@@ -29,17 +29,17 @@ export const getClaim = async (c: Context) => {
 export const postClaim = async (c: Context) => {
     try {
         const body = await c.req.json();
-        const { item_id, claimant_name, claimant_email, proof_text } = body;
+        const { item_id, claimant_name, claimant_email, proof_text, evidence_image_url } = body;
 
         if (!item_id || !claimant_name || !claimant_email) {
             return c.json({ message: 'item_id, claimant_name, and claimant_email are required' }, 400);
         }
 
-        const result: any = await createClaim({ item_id, claimant_name, claimant_email, proof_text });
+        const result: any = await createClaim({ item_id, claimant_name, claimant_email, proof_text, evidence_image_url });
 
         return c.json({
             message: 'Claim submitted successfully',
-            claim: { id: result.insertId, item_id, claimant_name, claimant_email, proof_text, status: 'pending' }
+            claim: { id: result.insertId, item_id, claimant_name, claimant_email, proof_text, evidence_image_url, status: 'pending' }
         }, 201);
     } catch (error) {
         return c.json({ message: 'Failed to submit claim' }, 500);

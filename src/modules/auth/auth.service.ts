@@ -2,6 +2,7 @@ import nodemailer from 'nodemailer';
 import jwt from 'jsonwebtoken';
 import db from '../../config/db.js';
 import dotenv from 'dotenv';
+import bcrypt from 'bcrypt';
 dotenv.config();
 
 const transporter = nodemailer.createTransport({
@@ -11,6 +12,8 @@ const transporter = nodemailer.createTransport({
     pass: process.env.EMAIL_PASS
   }
 });
+
+
 
 export const generateOTP = () => {
   return Math.floor(100000 + Math.random() * 900000).toString();
@@ -59,6 +62,13 @@ export const verifyCredentials = async (email: string, password: string, role: s
     table = 'admins';
   }
 
-  const [rows]: any = await db.query(`SELECT * FROM ${table} WHERE email = ? AND password = ?`, [email, password]);
-  return rows[0];
+  const [rows]: any = await db.query(`SELECT * FROM ${table} WHERE email = ?`, [email]);
+  const user = rows[0];
+
+  if (user && await bcrypt.compare(password, user.password)) {
+    return user;
+  }
+  
+  return null;
 };
+
