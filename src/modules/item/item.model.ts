@@ -25,23 +25,18 @@ export const createItem = async (data: {
     return result;
 };
 
-export const updateItem = async (id: number, data: {
-    name?: string;
-    description?: string;
-    location?: string;
-    date?: string;
-    image_url?: string;
-    status?: string;
-}) => {
+export const updateItem = async (id: number, data: any) => {
     const fields: string[] = [];
     const values: any[] = [];
 
-    if (data.name !== undefined) { fields.push('name = ?'); values.push(data.name); }
-    if (data.description !== undefined) { fields.push('description = ?'); values.push(data.description); }
-    if (data.location !== undefined) { fields.push('location = ?'); values.push(data.location); }
-    if (data.date !== undefined) { fields.push('date = ?'); values.push(data.date); }
-    if (data.image_url !== undefined) { fields.push('image_url = ?'); values.push(data.image_url); }
-    if (data.status !== undefined) { fields.push('status = ?'); values.push(data.status); }
+    const allowedFields = ['name', 'description', 'location', 'date', 'image_url', 'status'];
+    
+    for (const field of allowedFields) {
+        if (data[field] !== undefined) {
+            fields.push(`${field} = ?`);
+            values.push(data[field]);
+        }
+    }
 
     if (fields.length === 0) return null;
 
