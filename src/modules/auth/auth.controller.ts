@@ -14,7 +14,7 @@ export const register = async (c: Context) => {
     // Check if user already exists
     const [existingUsers]: any = await db.query('SELECT * FROM users WHERE email = ?', [email]);
     if (existingUsers.length > 0) {
-      return c.json({ message: 'User already exists' }, 400);
+      return c.json({ message: 'This email is already used' }, 400);
     }
 
     const otp = authService.generateOTP();
@@ -111,21 +111,46 @@ export const forgotPassword = async (c: Context) => {
     const [admin]: any = await db.query('SELECT * FROM admins WHERE email = ?', [email]);
 
     if (user.length === 0 && admin.length === 0) {
-      // For security, don't reveal if email exists or not, but in this specific app we can be more direct
       return c.json({ message: 'If this email is registered, you will receive a reset link shortly.' });
     }
 
-    const otp = authService.generateOTP();
-    await authService.saveOTP(email, otp);
+    const token = authService.generateResetToken();
+    await authService.saveResetToken(email, token);
     
-    // In a real app, this would be a link with a token, 
-    // but we'll reuse the OTP service for the demonstration of "fixing the integration error"
-    await authService.sendOTPEmail(email, otp);
+    // Create the reset link pointing to the frontend
+    const resetLink = `http://localhost:4200/user/reset-password?token=${token}`;
+    await authService.sendResetEmail(email, resetLink);
 
-    return c.json({ message: 'Reset link/code sent successfully' });
+    return c.json({ message: 'Reset link sent successfully' });
   } catch (error: any) {
     console.error('Forgot password error:', error);
     return c.json({ message: 'Failed to process request', error: error.message }, 500);
+  }
+};
+
+export const resetPassword = async (c: Context) => {
+  try {
+    const { token, newPassword } = await c.req.json();
+
+    if (!token || !newPassword) {
+      return c.json({ message: 'Token and new password are required' }, 400);
+    }
+
+    const email = await authService.verifyResetToken(token);
+    if (!email) {
+      return c.json({ message: 'Invalid or expired reset token' }, 400);
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // Update in both potential tables (if email exists in both, it updates both)
+    await db.query('UPDATE users SET password = ? WHERE email = ?', [hashedPassword, email]);
+    await db.query('UPDATE admins SET password = ? WHERE email = ?', [hashedPassword, email]);
+
+    return c.json({ message: 'Password has been reset successfully' });
+  } catch (error: any) {
+    console.error('Reset password error:', error);
+    return c.json({ message: 'Failed to reset password', error: error.message }, 500);
   }
 };
 

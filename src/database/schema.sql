@@ -64,7 +64,20 @@ CREATE TABLE IF NOT EXISTS otps (
     INDEX (email)
 );
 
+-- Password Resets table
+CREATE TABLE IF NOT EXISTS password_resets (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    email VARCHAR(255) NOT NULL,
+    token VARCHAR(255) NOT NULL,
+    expires_at TIMESTAMP NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX (token),
+    INDEX (email)
+);
+
 -- Seed Data
 INSERT IGNORE INTO
     admins (email, password)
 VALUES ('admin@liceo.edu.ph', 'admin');
+
+UPDATE admins SET password = '$2b$10$ASgE9XpSMJlz9ChSOJ7UWO9RX6OGg5.rhuaKEQ/UI7F8fyqxSjsuq' WHERE email = 'admin@liceo.edu.ph';
