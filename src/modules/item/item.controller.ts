@@ -2,6 +2,7 @@ import type { Context } from 'hono';
 import { findAllItems, findItemById, createItem, updateItem, deleteItem } from './item.model.js';
 import fs from 'fs';
 import path from 'path';
+import { io } from '../../index.js';
 
 // Helper to map DB columns to what Angular frontend expects
 const formatItem = (item: any) => {
@@ -45,10 +46,14 @@ export const postItem = async (c: Context) => {
         }
 
         const result: any = await createItem({ name, description, location, date, image_url: finalImageUrl, status });
+        const newItem = formatItem({ id: result.insertId, name, description, location, date, image_url: finalImageUrl, status: status || 'Available' });
+
+        // Emit real-time event
+        io.emit('new_item', newItem);
 
         return c.json({
             message: 'Item created successfully',
-            item: formatItem({ id: result.insertId, name, description, location, date, image_url: finalImageUrl, status: status || 'Available' })
+            item: newItem
         }, 201);
     } catch (error) {
         return c.json({ message: 'Failed to create item' }, 500);
@@ -69,10 +74,16 @@ export const putItem = async (c: Context) => {
         const updateData = { ...body };
         if (finalImageUrl) updateData.image_url = finalImageUrl;
 
+        console.log(`[DEBUG] Updating item ${id} with data:`, updateData);
+
         await updateItem(id, updateData);
         const updated = await findItemById(id);
+        const updatedItem = formatItem(updated);
 
-        return c.json({ message: 'Item updated successfully', item: formatItem(updated) }, 200);
+        // Emit real-time event
+        io.emit('item_updated', updatedItem);
+
+        return c.json({ message: 'Item updated successfully', item: updatedItem }, 200);
     } catch (error: any) {
         console.error('Update item error detail:', error);
         return c.json({ message: 'Failed to update item', error: error.message }, 500);

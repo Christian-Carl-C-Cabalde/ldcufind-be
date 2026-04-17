@@ -25,7 +25,8 @@ export const sendOTPEmail = async (email: string, otp: string) => {
     from: process.env.EMAIL_USER,
     to: email,
     subject: 'LDCUFind Verification Code',
-    text: `Hello, here is your OTP code for LDCUFind: ${otp}. It will expire in 10 minutes.`
+    text: `Hello, here is your OTP code for LDCUFind: ${otp}. It will expire in 10 minutes.`,
+    html: `Hello, here is your OTP code for LDCUFind: <b>${otp}</b>. It will expire in 10 minutes.`
   };
 
   return transporter.sendMail(mailOptions);
@@ -43,7 +44,7 @@ export const sendResetEmail = async (email: string, link: string) => {
         <div style="text-align: center; margin: 30px 0;">
           <a href="${link}" style="background-color: #8b0000; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 600;">Reset Password</a>
         </div>
-        <p style="color: #64748b; font-size: 0.875rem;">This link will expire in 1 hour. If you didn't request this, you can safely ignore this email.</p>
+        <p style="color: #64748b; font-size: 0.875rem;">This link will expire in 3 minutes. If you didn't request this, you can safely ignore this email.</p>
         <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 20px 0;" />
         <p style="color: #94a3b8; font-size: 0.75rem;">If the button doesn't work, copy and paste this link into your browser:<br/> ${link}</p>
       </div>
@@ -58,7 +59,7 @@ export const generateResetToken = () => {
 };
 
 export const saveResetToken = async (email: string, token: string) => {
-  const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour from now
+  const expiresAt = new Date(Date.now() + 3 * 60 * 1000); // 3 minutes from now
   await db.query(
     'INSERT INTO password_resets (email, token, expires_at) VALUES (?, ?, ?)',
     [email, token, expiresAt]
@@ -70,14 +71,15 @@ export const verifyResetToken = async (token: string) => {
     'SELECT email FROM password_resets WHERE token = ? AND expires_at > NOW() ORDER BY created_at DESC LIMIT 1',
     [token]
   );
-  
+
   if (rows.length > 0) {
-    const email = rows[0].email;
-    // Delete tokens after verification or they will be cleaned up eventually
-    await db.query('DELETE FROM password_resets WHERE email = ?', [email]);
-    return email;
+    return rows[0].email;
   }
   return null;
+};
+
+export const deleteResetToken = async (email: string) => {
+  await db.query('DELETE FROM password_resets WHERE email = ?', [email]);
 };
 
 export const saveOTP = async (email: string, code: string) => {
@@ -93,7 +95,7 @@ export const verifyOTPInDb = async (email: string, code: string) => {
     'SELECT * FROM otps WHERE email = ? AND code = ? AND expires_at > NOW() ORDER BY created_at DESC LIMIT 1',
     [email, code]
   );
-  
+
   if (rows.length > 0) {
     // Delete OTP after successful verification to prevent reuse
     await db.query('DELETE FROM otps WHERE email = ?', [email]);
@@ -118,7 +120,7 @@ export const verifyCredentials = async (email: string, password: string, role: s
   if (user && await bcrypt.compare(password, user.password)) {
     return user;
   }
-  
+
   return null;
 };
 

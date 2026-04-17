@@ -1,5 +1,6 @@
 import type { Context } from 'hono';
 import { findAllUsers, findUserById, toggleUserStatus, updateUserProfile } from './user.model.js';
+import { io } from '../../index.js';
 
 export const getUsers = async (c: Context) => {
     try {
@@ -38,8 +39,18 @@ export const patchUserStatus = async (c: Context) => {
             return c.json({ message: 'User not found' }, 404);
         }
 
+        // Guard: only standard (Student) users can have their status toggled
+        if (existing.role === 'Admin') {
+            return c.json({ message: 'Action not allowed: Cannot deactivate an admin account.' }, 403);
+        }
+
         await toggleUserStatus(id);
         const updated = await findUserById(id);
+
+        // Broadcast deactivation to all connected clients in real-time
+        if (!updated.is_active) {
+            io.emit('user-deactivated', { userId: id });
+        }
 
         return c.json({
             message: `User ${updated.is_active ? 'activated' : 'deactivated'} successfully`,
@@ -53,18 +64,19 @@ export const patchUserStatus = async (c: Context) => {
 export const patchUser = async (c: Context) => {
     try {
         const id = Number(c.req.param('id'));
-        const { name } = await c.req.json();
-
-        if (!name) {
-            return c.json({ message: 'Name is required' }, 400);
-        }
+        const { name, avatarUrl } = await c.req.json();
 
         const existing = await findUserById(id);
         if (!existing) {
             return c.json({ message: 'User not found' }, 404);
         }
 
-        await updateUserProfile(id, name);
+        // Use new name or keep existing if not provided
+        const finalName = name || existing.name;
+        // Use new avatarUrl or keep existing if not provided
+        const finalAvatarUrl = avatarUrl !== undefined ? avatarUrl : existing.avatar_url;
+
+        await updateUserProfile(id, finalName, finalAvatarUrl);
         const updated = await findUserById(id);
 
         return c.json({
@@ -72,6 +84,7 @@ export const patchUser = async (c: Context) => {
             user: updated
         }, 200);
     } catch (error) {
+        console.error('Update profile error:', error);
         return c.json({ message: 'Failed to update profile' }, 500);
     }
 };

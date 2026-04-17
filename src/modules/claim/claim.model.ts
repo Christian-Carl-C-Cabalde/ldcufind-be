@@ -56,6 +56,7 @@ export const updateClaim = async (id: number, data: {
     proof_text?: string;
     claimant_name?: string;
     claimant_email?: string;
+    evidence_image_url?: string;
 }) => {
     const fields: string[] = [];
     const values: any[] = [];
@@ -63,6 +64,7 @@ export const updateClaim = async (id: number, data: {
     if (data.proof_text !== undefined) { fields.push('proof_text = ?'); values.push(data.proof_text); }
     if (data.claimant_name !== undefined) { fields.push('claimant_name = ?'); values.push(data.claimant_name); }
     if (data.claimant_email !== undefined) { fields.push('claimant_email = ?'); values.push(data.claimant_email); }
+    if (data.evidence_image_url !== undefined) { fields.push('evidence_image_url = ?'); values.push(data.evidence_image_url); }
 
     if (fields.length === 0) return null;
 

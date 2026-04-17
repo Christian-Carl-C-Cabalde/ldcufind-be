@@ -2,10 +2,10 @@ import db from '../../config/db.js';
 
 export const findAllUsers = async () => {
     const [rows]: any = await db.query(`
-        SELECT id, name, email, role, is_active, created_at 
+        SELECT id, name, email, role, is_active, avatar_url, created_at 
         FROM users 
         UNION ALL 
-        SELECT (id + 1000000) as id, 'Master Admin' as name, email, 'Admin' as role, 1 as is_active, created_at 
+        SELECT (id + 1000000) as id, 'Master Admin' as name, email, 'Admin' as role, 1 as is_active, NULL as avatar_url, created_at 
         FROM admins
         ORDER BY created_at DESC
     `);
@@ -25,10 +25,10 @@ export const toggleUserStatus = async (id: number) => {
     return result;
 };
 
-export const updateUserProfile = async (id: number, name: string) => {
+export const updateUserProfile = async (id: number, name: string, avatarUrl: string | null = null) => {
     const [result] = await db.query(
-        'UPDATE users SET name = ? WHERE id = ?',
-        [name, id]
+        'UPDATE users SET name = ?, avatar_url = ? WHERE id = ?',
+        [name, avatarUrl, id]
     );
     return result;
 };

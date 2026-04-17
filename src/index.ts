@@ -17,6 +17,8 @@ import uploadRoutes from './modules/upload/upload.routes.js'
 import { serveStatic } from '@hono/node-server/serve-static'
 import fs from 'fs'
 
+import { Server as SocketIOServer } from 'socket.io'
+
 const app = new Hono()
 
 // Enable CORS for Angular frontend
@@ -55,7 +57,7 @@ app.route('/api/upload', uploadRoutes)
 // Use PORT from .env, fallback to 3000
 const port = Number(process.env.PORT) || 3000
 
-serve(
+const server = serve(
   {
     fetch: app.fetch,
     port,
@@ -64,3 +66,21 @@ serve(
     console.log(`Server is running on http://localhost:${info.port}`)
   }
 )
+
+// Initialize Socket.io
+const io = new SocketIOServer(server, {
+  cors: {
+    origin: 'http://localhost:4200',
+    methods: ['GET', 'POST'],
+  },
+})
+
+io.on('connection', (socket) => {
+  console.log('Client connected:', socket.id)
+
+  socket.on('disconnect', () => {
+    console.log('Client disconnected:', socket.id)
+  })
+})
+
+export { io }

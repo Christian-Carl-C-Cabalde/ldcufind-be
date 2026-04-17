@@ -11,6 +11,10 @@ export const register = async (c: Context) => {
       return c.json({ message: 'Name, email, and password are required' }, 400);
     }
 
+    if (!email.toLowerCase().endsWith('@liceo.edu.ph')) {
+      return c.json({ message: 'Only @liceo.edu.ph emails are allowed' }, 400);
+    }
+
     // Check if user already exists
     const [existingUsers]: any = await db.query('SELECT * FROM users WHERE email = ?', [email]);
     if (existingUsers.length > 0) {
@@ -110,9 +114,7 @@ export const forgotPassword = async (c: Context) => {
     const [user]: any = await db.query('SELECT * FROM users WHERE email = ?', [email]);
 
     if (user.length === 0) {
-      // Return success message even if not found to prevent email discovery, 
-      // and explicitly do nothing for admin accounts found in 'admins' table.
-      return c.json({ message: 'If this email is registered, you will receive a reset link shortly.' });
+      return c.json({ message: 'Email does not exist' }, 404);
     }
 
     const token = authService.generateResetToken();
@@ -142,10 +144,22 @@ export const resetPassword = async (c: Context) => {
       return c.json({ message: 'Invalid or expired reset token' }, 400);
     }
 
+    // Check if new password is same as old
+    const [userRows]: any = await db.query('SELECT password FROM users WHERE email = ?', [email]);
+    if (userRows.length > 0) {
+      const isSame = await bcrypt.compare(newPassword, userRows[0].password);
+      if (isSame) {
+        return c.json({ message: 'You can’t reuse your previous password' }, 400);
+      }
+    }
+
     const hashedPassword = await bcrypt.hash(newPassword, 10);
 
     // Update ONLY in the users table to enforce admin exclusion
     await db.query('UPDATE users SET password = ? WHERE email = ?', [hashedPassword, email]);
+
+    // Delete token ONLY after successful update
+    await authService.deleteResetToken(email);
 
     return c.json({ message: 'Password has been reset successfully' });
   } catch (error: any) {
