@@ -1,7 +1,7 @@
 import type { Context } from 'hono';
 import { findAllClaims, findClaimById, createClaim, updateClaimStatus, updateClaim, removeClaim } from './claim.model.js';
 import { updateItem as updateItemModel } from '../item/item.model.js';
-import { io } from '../../index.js';
+import { getIO } from '../../socket.js';
 
 export const getClaims = async (c: Context) => {
     try {
@@ -43,7 +43,7 @@ export const postClaim = async (c: Context) => {
         const fullClaim = await findClaimById(result.insertId);
 
         // Emit real-time event
-        io.emit('new_claim', fullClaim);
+        getIO()?.emit('new_claim', fullClaim);
 
         return c.json({
             message: 'Claim submitted successfully',
@@ -73,12 +73,21 @@ export const patchClaimStatus = async (c: Context) => {
 
         // If verified, automatically mark the item as Settled
         if (status === 'verified' && existing.item_id) {
-            await updateItemModel(existing.item_id, { status: 'Settled' });
-            io.emit('item_updated', { id: existing.item_id, status: 'Settled' });
+            const itemId = Number(existing.item_id);
+            await updateItemModel(itemId, { status: 'Settled' });
+            try {
+                getIO()?.emit('item_updated', { id: itemId, status: 'Settled' });
+            } catch (emitErr) {
+                console.error('Socket emit error (item_updated):', emitErr);
+            }
         }
 
         // Emit real-time event
-        io.emit('claim_status_updated', { id, status });
+        try {
+            getIO()?.emit('claim_status_updated', { id: Number(id), status: String(status) });
+        } catch (emitErr) {
+            console.error('Socket emit error (claim_status_updated):', emitErr);
+        }
 
         return c.json({ message: `Claim ${status} successfully` }, 200);
     } catch (error) {

@@ -3,20 +3,20 @@ import db from '../../config/db.js';
 export const findAllClaims = async (status?: string) => {
     if (status && status !== 'all') {
         const [rows] = await db.query(
-            'SELECT c.*, i.name as item_name, i.image_url as item_image_url FROM claims c LEFT JOIN items i ON c.item_id = i.id WHERE c.status = ? ORDER BY c.created_at DESC',
+            'SELECT c.*, i.name as item_name, i.image_url as item_image_url, i.description as item_description, i.location as item_location FROM claims c LEFT JOIN items i ON c.item_id = i.id WHERE c.status = ? ORDER BY c.created_at DESC',
             [status]
         );
         return rows;
     }
     const [rows] = await db.query(
-        'SELECT c.*, i.name as item_name, i.image_url as item_image_url FROM claims c LEFT JOIN items i ON c.item_id = i.id ORDER BY c.created_at DESC'
+        'SELECT c.*, i.name as item_name, i.image_url as item_image_url, i.description as item_description, i.location as item_location FROM claims c LEFT JOIN items i ON c.item_id = i.id ORDER BY c.created_at DESC'
     );
     return rows;
 };
 
 export const findClaimById = async (id: number) => {
     const [rows]: any = await db.query(
-        'SELECT c.*, i.name as item_name, i.image_url as item_image_url FROM claims c LEFT JOIN items i ON c.item_id = i.id WHERE c.id = ?',
+        'SELECT c.*, i.name as item_name, i.image_url as item_image_url, i.description as item_description, i.location as item_location FROM claims c LEFT JOIN items i ON c.item_id = i.id WHERE c.id = ?',
         [id]
     );
     return rows[0];

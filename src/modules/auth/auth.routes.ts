@@ -9,6 +9,9 @@ authRoutes.post('/register', authController.register);
 // POST /api/auth/verify-otp - verifies OTP and creates user
 authRoutes.post('/verify-otp', authController.verifyOtp);
 
+// POST /api/auth/resend-otp - resends OTP
+authRoutes.post('/resend-otp', authController.resendOtp);
+
 // POST /api/auth/login - returns JWT
 authRoutes.post('/login', authController.login);
 

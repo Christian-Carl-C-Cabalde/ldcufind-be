@@ -2,7 +2,7 @@ import type { Context } from 'hono';
 import { findAllItems, findItemById, createItem, updateItem, deleteItem } from './item.model.js';
 import fs from 'fs';
 import path from 'path';
-import { io } from '../../index.js';
+import { getIO } from '../../socket.js';
 
 // Helper to map DB columns to what Angular frontend expects
 const formatItem = (item: any) => {
@@ -49,7 +49,7 @@ export const postItem = async (c: Context) => {
         const newItem = formatItem({ id: result.insertId, name, description, location, date, image_url: finalImageUrl, status: status || 'Available' });
 
         // Emit real-time event
-        io.emit('new_item', newItem);
+        getIO()?.emit('new_item', newItem);
 
         return c.json({
             message: 'Item created successfully',
@@ -81,7 +81,7 @@ export const putItem = async (c: Context) => {
         const updatedItem = formatItem(updated);
 
         // Emit real-time event
-        io.emit('item_updated', updatedItem);
+        getIO()?.emit('item_updated', updatedItem);
 
         return c.json({ message: 'Item updated successfully', item: updatedItem }, 200);
     } catch (error: any) {

@@ -25,8 +25,8 @@ export const sendOTPEmail = async (email: string, otp: string) => {
     from: process.env.EMAIL_USER,
     to: email,
     subject: 'LDCUFind Verification Code',
-    text: `Hello, here is your OTP code for LDCUFind: ${otp}. It will expire in 10 minutes.`,
-    html: `Hello, here is your OTP code for LDCUFind: <b>${otp}</b>. It will expire in 10 minutes.`
+    text: `Hello, here is your OTP code for LDCUFind: ${otp}. It will expire in 3 minutes.`,
+    html: `Hello, here is your OTP code for LDCUFind: <b>${otp}</b>. It will expire in 3 minutes.`
   };
 
   return transporter.sendMail(mailOptions);
@@ -83,7 +83,7 @@ export const deleteResetToken = async (email: string) => {
 };
 
 export const saveOTP = async (email: string, code: string) => {
-  const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes from now
+  const expiresAt = new Date(Date.now() + 3 * 60 * 1000); // 3 minutes from now
   await db.query(
     'INSERT INTO otps (email, code, expires_at) VALUES (?, ?, ?)',
     [email, code, expiresAt]

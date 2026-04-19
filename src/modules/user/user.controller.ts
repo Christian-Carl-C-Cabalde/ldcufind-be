@@ -1,6 +1,8 @@
 import type { Context } from 'hono';
 import { findAllUsers, findUserById, toggleUserStatus, updateUserProfile } from './user.model.js';
-import { io } from '../../index.js';
+import { getIO } from '../../socket.js';
+import bcrypt from 'bcrypt';
+import db from '../../config/db.js';
 
 export const getUsers = async (c: Context) => {
     try {
@@ -49,7 +51,7 @@ export const patchUserStatus = async (c: Context) => {
 
         // Broadcast deactivation to all connected clients in real-time
         if (!updated.is_active) {
-            io.emit('user-deactivated', { userId: id });
+            getIO()?.emit('user-deactivated', { userId: id });
         }
 
         return c.json({
@@ -86,6 +88,36 @@ export const patchUser = async (c: Context) => {
     } catch (error) {
         console.error('Update profile error:', error);
         return c.json({ message: 'Failed to update profile' }, 500);
+    }
+};
+
+export const changePassword = async (c: Context) => {
+    try {
+        const { userId, oldPassword, newPassword } = await c.req.json();
+
+        if (!userId || !oldPassword || !newPassword) {
+            return c.json({ message: 'All fields are required' }, 400);
+        }
+
+        const [userRows]: any = await db.query('SELECT * FROM users WHERE id = ?', [userId]);
+        if (userRows.length === 0) {
+            return c.json({ message: 'User not found' }, 404);
+        }
+
+        const user = userRows[0];
+
+        const isMatch = await bcrypt.compare(oldPassword, user.password);
+        if (!isMatch) {
+            return c.json({ message: 'Incorrect old password' }, 400);
+        }
+
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+        await db.query('UPDATE users SET password = ? WHERE id = ?', [hashedPassword, userId]);
+
+        return c.json({ message: 'Password changed successfully' }, 200);
+    } catch (error) {
+        console.error('Change password error:', error);
+        return c.json({ message: 'Failed to change password' }, 500);
     }
 };
 

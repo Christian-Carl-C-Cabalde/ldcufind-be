@@ -17,7 +17,7 @@ import uploadRoutes from './modules/upload/upload.routes.js'
 import { serveStatic } from '@hono/node-server/serve-static'
 import fs from 'fs'
 
-import { Server as SocketIOServer } from 'socket.io'
+import { initSocket } from './socket.js'
 
 const app = new Hono()
 
@@ -68,19 +68,4 @@ const server = serve(
 )
 
 // Initialize Socket.io
-const io = new SocketIOServer(server, {
-  cors: {
-    origin: 'http://localhost:4200',
-    methods: ['GET', 'POST'],
-  },
-})
-
-io.on('connection', (socket) => {
-  console.log('Client connected:', socket.id)
-
-  socket.on('disconnect', () => {
-    console.log('Client disconnected:', socket.id)
-  })
-})
-
-export { io }
+initSocket(server as any)

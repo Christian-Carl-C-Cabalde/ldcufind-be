@@ -62,6 +62,25 @@ export const verifyOtp = async (c: Context) => {
   }
 };
 
+export const resendOtp = async (c: Context) => {
+  try {
+    const { email } = await c.req.json();
+
+    if (!email) {
+      return c.json({ message: 'Email is required' }, 400);
+    }
+
+    const otp = authService.generateOTP();
+    await authService.saveOTP(email, otp);
+    await authService.sendOTPEmail(email, otp);
+
+    return c.json({ message: 'OTP sent to your email' }, 200);
+  } catch (error: any) {
+    console.error('Resend OTP error:', error);
+    return c.json({ message: 'Failed to resend OTP', error: error.message }, 500);
+  }
+};
+
 export const login = async (c: Context) => {
   try {
     const { email, password, role } = await c.req.json();
