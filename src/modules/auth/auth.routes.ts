@@ -21,5 +21,11 @@ authRoutes.post('/forgot-password', authController.forgotPassword);
 // POST /api/auth/reset-password - updates password using token
 authRoutes.post('/reset-password', authController.resetPassword);
 
+// GET /api/auth/me - gets current user profile
+authRoutes.get('/me', authController.getCurrentUser);
+
+// POST /api/auth/logout - clears cookie
+authRoutes.post('/logout', authController.logout);
+
 export default authRoutes;
 

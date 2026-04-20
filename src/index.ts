@@ -26,6 +26,7 @@ app.use('/*', cors({
   origin: 'http://localhost:4200',
   allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
   allowHeaders: ['Content-Type', 'Authorization'],
+  credentials: true,
 }))
 
 // Health check

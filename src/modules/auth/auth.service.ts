@@ -109,16 +109,26 @@ export const generateToken = (payload: any) => {
 };
 
 export const verifyCredentials = async (email: string, password: string, role: string = 'Student') => {
-  let table = 'users';
-  if (role === 'Admin') {
-    table = 'admins';
-  }
+  let table = role === 'Admin' ? 'admins' : 'users';
 
   const [rows]: any = await db.query(`SELECT * FROM ${table} WHERE email = ?`, [email]);
   const user = rows[0];
 
-  if (user && await bcrypt.compare(password, user.password)) {
-    return user;
+  if (user) {
+    // Check if the database password starts with bcrypt's signature ($2a$ or $2b$)
+    const isHashed = user.password.startsWith('$2a$') || user.password.startsWith('$2b$');
+
+    if (isHashed) {
+      // If it's hashed in the DB, use bcrypt to compare
+      if (await bcrypt.compare(password, user.password)) {
+        return user;
+      }
+    } else {
+      // If it's plain text in the DB, do a direct comparison
+      if (password === user.password) {
+        return user;
+      }
+    }
   }
 
   return null;

@@ -1,14 +1,13 @@
 import type { Context, Next } from 'hono';
 import jwt from 'jsonwebtoken';
+import { getCookie } from 'hono/cookie';
 
 export const authMiddleware = async (c: Context, next: Next) => {
-  const authHeader = c.req.header('Authorization');
+  const token = getCookie(c, 'ldcufind_token');
 
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+  if (!token) {
     return c.json({ message: 'Unauthorized: No token provided' }, 401);
   }
-
-  const token = authHeader.split(' ')[1];
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET as string);
