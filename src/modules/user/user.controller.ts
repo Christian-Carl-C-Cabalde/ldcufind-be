@@ -1,5 +1,8 @@
 import type { Context } from 'hono';
 import { findAllUsers, findUserById, toggleUserStatus, updateUserProfile } from './user.model.js';
+import { getIO } from '../../socket.js';
+import bcrypt from 'bcrypt';
+import db from '../../config/db.js';
 
 export const getUsers = async (c: Context) => {
     try {
@@ -38,8 +41,18 @@ export const patchUserStatus = async (c: Context) => {
             return c.json({ message: 'User not found' }, 404);
         }
 
+        // Guard: only standard (Student) users can have their status toggled
+        if (existing.role === 'Admin') {
+            return c.json({ message: 'Action not allowed: Cannot deactivate an admin account.' }, 403);
+        }
+
         await toggleUserStatus(id);
         const updated = await findUserById(id);
+
+        // Broadcast deactivation to all connected clients in real-time
+        if (!updated.is_active) {
+            getIO()?.emit('user-deactivated', { userId: id });
+        }
 
         return c.json({
             message: `User ${updated.is_active ? 'activated' : 'deactivated'} successfully`,
@@ -53,18 +66,19 @@ export const patchUserStatus = async (c: Context) => {
 export const patchUser = async (c: Context) => {
     try {
         const id = Number(c.req.param('id'));
-        const { name } = await c.req.json();
-
-        if (!name) {
-            return c.json({ message: 'Name is required' }, 400);
-        }
+        const { name, avatarUrl } = await c.req.json();
 
         const existing = await findUserById(id);
         if (!existing) {
             return c.json({ message: 'User not found' }, 404);
         }
 
-        await updateUserProfile(id, name);
+        // Use new name or keep existing if not provided
+        const finalName = name || existing.name;
+        // Use new avatarUrl or keep existing if not provided
+        const finalAvatarUrl = avatarUrl !== undefined ? avatarUrl : existing.avatar_url;
+
+        await updateUserProfile(id, finalName, finalAvatarUrl);
         const updated = await findUserById(id);
 
         return c.json({
@@ -72,7 +86,38 @@ export const patchUser = async (c: Context) => {
             user: updated
         }, 200);
     } catch (error) {
+        console.error('Update profile error:', error);
         return c.json({ message: 'Failed to update profile' }, 500);
+    }
+};
+
+export const changePassword = async (c: Context) => {
+    try {
+        const { userId, oldPassword, newPassword } = await c.req.json();
+
+        if (!userId || !oldPassword || !newPassword) {
+            return c.json({ message: 'All fields are required' }, 400);
+        }
+
+        const [userRows]: any = await db.query('SELECT * FROM users WHERE id = ?', [userId]);
+        if (userRows.length === 0) {
+            return c.json({ message: 'User not found' }, 404);
+        }
+
+        const user = userRows[0];
+
+        const isMatch = await bcrypt.compare(oldPassword, user.password);
+        if (!isMatch) {
+            return c.json({ message: 'Incorrect old password' }, 400);
+        }
+
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+        await db.query('UPDATE users SET password = ? WHERE id = ?', [hashedPassword, userId]);
+
+        return c.json({ message: 'Password changed successfully' }, 200);
+    } catch (error) {
+        console.error('Change password error:', error);
+        return c.json({ message: 'Failed to change password' }, 500);
     }
 };
 
